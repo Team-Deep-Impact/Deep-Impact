@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Circle, Text, Line } from 'react-konva';
-import { Slider } from '@mui/material';
+import { Slider, Button } from '@mui/material';
 import axios from 'axios';
 
 const API_KEY = 'LF7i77oqghRiq54HEFJh991WgjHcKsETP9D5ofsg';
@@ -23,11 +23,12 @@ function Scenario() {
     size: 1,
     speed: 0.05,
     mass: 1,
-    angle: Math.PI / 4,
+    angle: Math.PI / 9,
     x: 100,
     y: CANVAS_HEIGHT / 2 - 100,
   });
   const [trajectoryPoints, setTrajectoryPoints] = useState([]);
+  const [forecastPoints, setForecastPoints] = useState([]);
   const animationRef = useRef();
   const asteroidsData = useRef([]);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -59,16 +60,18 @@ function Scenario() {
     console.log('Asteroid Data:', asteroidData);
     const size = asteroidData.estimated_diameter.kilometers.estimated_diameter_max;
     const mass = estimateMass(size);
+    const speed = asteroidData.close_approach_data[0].relative_velocity.kilometers_per_second / 1000;
     setAsteroid({
       name: asteroidData.name,
       size: size,
-      speed: asteroidData.close_approach_data[0].relative_velocity.kilometers_per_second / 1000,
+      speed: speed,
       mass: mass,
-      angle: Math.PI / 8,
+      angle: Math.PI / 9,
       x: 100,
       y: CANVAS_HEIGHT / 2 - 100,
     });
     setTrajectoryPoints([]);
+    calculateForecastPath(size, speed, Math.PI / 9, mass); // Calculate the forecast path once
   };
 
   const handleAsteroidSelect = (event) => {
@@ -84,6 +87,52 @@ function Scenario() {
       vy -= 0.1; // Example effect
     }
     return { vx, vy };
+  };
+
+  const calculateForecastPath = (size, speed, angle, mass) => {
+    let x = 100;
+    let y = CANVAS_HEIGHT / 2 - 100;
+    let vx = speed * Math.cos(angle);
+    let vy = speed * Math.sin(angle);
+    const points = [];
+    let iterationCount = 0;
+    const maxIterations = 2000; // Extended limit to allow for longer forecast
+
+    while (true) {
+      const dx = EARTH_X - x;
+      const dy = EARTH_Y - y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Check if the asteroid hits Earth
+      if (distance <= EARTH_RADIUS_KM * EARTH_DISPLAY_SCALE + size * ASTEROID_DISPLAY_SCALE) {
+        break;
+      }
+
+      // Apply gravitational force
+      const force = (G * EARTH_MASS * mass) / (distance * distance);
+      const ax = force * (dx / distance) / mass;
+      const ay = force * (dy / distance) / mass;
+
+      vx += ax * timeStep;
+      vy += ay * timeStep;
+
+      x += vx * timeStep;
+      y += vy * timeStep;
+
+      points.push(x, y);
+
+      iterationCount++;
+      if (iterationCount >= maxIterations) {
+        break;
+      }
+
+      // Stop the loop if the asteroid goes off screen
+      if (y > CANVAS_HEIGHT * SIMULATION_AREA_MULTIPLIER || x > CANVAS_WIDTH * SIMULATION_AREA_MULTIPLIER || y < -CANVAS_HEIGHT * SIMULATION_AREA_MULTIPLIER || x < -CANVAS_WIDTH * SIMULATION_AREA_MULTIPLIER) {
+        break;
+      }
+    }
+
+    setForecastPoints(points);
   };
 
   const simulate = () => {
@@ -143,6 +192,11 @@ function Scenario() {
     setTimeStep(newValue);
   };
 
+  const handleAngleChange = (event, newValue) => {
+    setAsteroid(prev => ({ ...prev, angle: newValue }));
+    calculateForecastPath(asteroid.size, asteroid.speed, newValue, asteroid.mass);
+  };
+
   return (
     <>
       <div>
@@ -158,7 +212,15 @@ function Scenario() {
           <option value="Kinetic Impact">Kinetic Impact</option>
           <option value="Gravity Tractor">Gravity Tractor</option>
         </select>
-        <button onClick={handleSimulate} disabled={isSimulating}>Simulate</button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSimulate}
+          disabled={isSimulating}
+          style={{ marginTop: '10px' }}
+        >
+          Simulate
+        </Button>
         {simulationResult && (
           <div>
             <h2>Simulation Result</h2>
@@ -185,6 +247,17 @@ function Scenario() {
             aria-labelledby="time-step-slider"
           />
         </div>
+        <div>
+          <h3>Initial Angle: {(asteroid.angle * 180 / Math.PI).toFixed(2)}°</h3>
+          <Slider
+            value={asteroid.angle}
+            min={0}
+            max={Math.PI / 2}
+            step={Math.PI / 180}
+            onChange={handleAngleChange}
+            aria-labelledby="angle-slider"
+          />
+        </div>
       </div>
       <Stage width={CANVAS_WIDTH} height={CANVAS_HEIGHT}>
         <Layer>
@@ -193,6 +266,9 @@ function Scenario() {
           <Circle x={asteroid.x} y={asteroid.y} radius={asteroid.size * ASTEROID_DISPLAY_SCALE} fill="gray" stroke="black" strokeWidth={1} />
           {trajectoryPoints.length > 0 && (
             <Line points={trajectoryPoints.flat()} stroke="red" strokeWidth={2} />
+          )}
+          {forecastPoints.length > 0 && (
+            <Line points={forecastPoints} stroke="gray" strokeWidth={2} dash={[10, 10]} />
           )}
         </Layer>
       </Stage>
