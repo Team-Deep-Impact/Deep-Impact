@@ -4,6 +4,7 @@ import App from "./App";
 import Main from "./pages/main";
 import Scenario from "./pages/scenario";
 import About from "./pages/about";
+import Effects from "./pages/effects";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
       {
         path: 'about/',
         element: <About />
+      },
+      {
+        path: 'effects/',
+        element: <Effects />
       }
       
     ],
