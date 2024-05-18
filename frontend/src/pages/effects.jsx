@@ -52,7 +52,6 @@ const Effects = () => {
         </li>
         <li className="text-l text-white mb-3">
           <strong>Long-term Effects:</strong> Severe climate changes, including extended “impact winters,” leading to mass extinctions and potentially the collapse of human civilization.
-// General Effects on Human Civilization
         </li>
       </ul>
       <h3 class="text-xl text-white my-5">General Effects on Human Civilization</h3>
