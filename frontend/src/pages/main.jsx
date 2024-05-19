@@ -4,7 +4,7 @@ function Main() {
   
     return (
       <>
-        <div>
+        <div className='w-7/12'>
             <h1 class="text-center text-2xl text-white my-5">Welcome to Deep Impact!</h1>
             <h2 class="text-center underline text-xl text-white my-5">Close Approaches</h2>
             <h3 class="text-xl text-white my-3">How close?</h3>
