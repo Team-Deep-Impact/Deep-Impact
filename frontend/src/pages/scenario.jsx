@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Circle, Text, Line } from 'react-konva';
-import { Slider, Button } from '@mui/material';
+import { Slider, Button, MenuItem, Select, Typography, Box } from '@mui/material';
 import axios from 'axios';
-
 
 const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
 const EARTH_DISPLAY_SCALE = 0.01; // Display scale for Earth
@@ -16,6 +15,7 @@ const CANVAS_HEIGHT = window.innerHeight;
 const EARTH_X = CANVAS_WIDTH - 100;
 const EARTH_Y = CANVAS_HEIGHT / 2;
 const SIMULATION_AREA_MULTIPLIER = 2; // Extend the simulation area
+const ROCKET_SPEED = 0.025; // Reduced speed of the rocket
 
 function Scenario() {
   const [asteroid, setAsteroid] = useState({
@@ -35,9 +35,19 @@ function Scenario() {
   const [simulationResult, setSimulationResult] = useState('');
   const [strategy, setStrategy] = useState(''); // State for selected strategy
   const [timeStep, setTimeStep] = useState(100); // State for time step
+  const [rocket, setRocket] = useState({
+    active: false,
+    x: EARTH_X,
+    y: EARTH_Y,
+    trajectory: [],
+    vx: 0,
+    vy: 0,
+  });
+  const [rocketDistance, setRocketDistance] = useState(10000);
+  const [collisionOccurred, setCollisionOccurred] = useState(false);
 
   useEffect(() => {
-    const fetchAsteroids = async (self, request) => {
+    const fetchAsteroids = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_REACT_APP_SERVER}/api/sentry/`);
         asteroidsData.current = response.data.near_earth_objects;
@@ -72,21 +82,13 @@ function Scenario() {
     });
     setTrajectoryPoints([]);
     calculateForecastPath(size, speed, Math.PI / 9, mass); // Calculate the forecast path once
+    setRocket({ active: false, x: EARTH_X, y: EARTH_Y, trajectory: [], vx: 0, vy: 0 });
+    setRocketDistance(10000);
+    setCollisionOccurred(false);
   };
 
   const handleAsteroidSelect = (event) => {
     setAsteroidData(event.target.value);
-  };
-
-  const applyDeflectionStrategy = (vx, vy) => {
-    if (strategy === 'Nuclear Detonation') {
-      vx += 0.5; // Example effect
-    } else if (strategy === 'Kinetic Impact') {
-      vx += 0.25; // Example effect
-    } else if (strategy === 'Gravity Tractor') {
-      vy -= 0.1; // Example effect
-    }
-    return { vx, vy };
   };
 
   const calculateForecastPath = (size, speed, angle, mass) => {
@@ -135,6 +137,20 @@ function Scenario() {
     setForecastPoints(points);
   };
 
+  const applyVelocityImpulse = (asteroid, strategy, rocketDx, rocketDy) => {
+    let impulseX = 0;
+    let impulseY = 0;
+    const angle = Math.atan2(rocketDy, rocketDx);
+    if (strategy === 'Nuclear Detonation') {
+      impulseX = 0.01 * Math.cos(angle);
+      impulseY = 0.01 * Math.sin(angle);
+    } else if (strategy === 'Kinetic Impact') {
+      impulseX = 0.005 * Math.cos(angle);
+      impulseY = 0.005 * Math.sin(angle);
+    }
+    return { vx: asteroid.vx + impulseX, vy: asteroid.vy + impulseY };
+  };
+
   const simulate = () => {
     let { x, y, speed, angle, mass } = asteroid;
 
@@ -142,8 +158,6 @@ function Scenario() {
     let vy = speed * Math.sin(angle);
 
     const updateFrame = () => {
-      console.log(`Asteroid position: (${x}, ${y}), velocity: (${vx}, ${vy})`);
-
       const dx = EARTH_X - x;
       const dy = EARTH_Y - y;
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -162,10 +176,48 @@ function Scenario() {
       vx += ax * timeStep;
       vy += ay * timeStep;
 
-      ({ vx, vy } = applyDeflectionStrategy(vx, vy));
-
       x += vx * timeStep;
       y += vy * timeStep;
+
+      // Update rocket position
+      setRocket((prev) => {
+        const rocketDx = x - prev.x;
+        const rocketDy = y - prev.y;
+        const rocketDistance = Math.sqrt(rocketDx * rocketDx + rocketDy * rocketDy);
+        const rocketAngle = Math.atan2(rocketDy, rocketDx);
+
+        const rocketVX = ROCKET_SPEED * Math.cos(rocketAngle);
+        const rocketVY = ROCKET_SPEED * Math.sin(rocketAngle);
+
+        const newX = prev.x + rocketVX * timeStep;
+        const newY = prev.y + rocketVY * timeStep;
+
+        if (rocketDistance <= asteroid.size * ASTEROID_DISPLAY_SCALE && !collisionOccurred) {
+          const newVelocity = applyVelocityImpulse({ vx, vy }, strategy, rocketDx, rocketDy);
+          vx = newVelocity.vx;
+          vy = newVelocity.vy;
+          setSimulationResult('Rocket intercepted the asteroid!');
+          setCollisionOccurred(true); // Mark collision occurred
+          return { ...prev, active: false, x: newX, y: newY, vx: 0, vy: 0 }; // Stop the rocket
+        }
+
+        return {
+          ...prev,
+          x: newX,
+          y: newY,
+          vx: prev.active ? rocketVX : 0, // Stop velocity if inactive
+          vy: prev.active ? rocketVY : 0, // Stop velocity if inactive
+          trajectory: [...prev.trajectory, newX, newY],
+        };
+      });
+
+      setRocketDistance(rocketDistance);
+
+      if (rocketDistance <= asteroid.size * ASTEROID_DISPLAY_SCALE && !collisionOccurred) {
+        setSimulationResult('Rocket intercepted the asteroid!');
+        setIsSimulating(false);
+        return;
+      }
 
       if (y > CANVAS_HEIGHT * SIMULATION_AREA_MULTIPLIER || x > CANVAS_WIDTH * SIMULATION_AREA_MULTIPLIER || y < -CANVAS_HEIGHT * SIMULATION_AREA_MULTIPLIER || x < -CANVAS_WIDTH * SIMULATION_AREA_MULTIPLIER) {
         setSimulationResult('Asteroid missed Earth!');
@@ -173,8 +225,8 @@ function Scenario() {
         return;
       }
 
-      setAsteroid(prev => ({ ...prev, x, y }));
-      setTrajectoryPoints(prev => [...prev, x, y]);
+      setAsteroid((prev) => ({ ...prev, x, y }));
+      setTrajectoryPoints((prev) => [...prev, x, y]);
       animationRef.current = window.requestAnimationFrame(updateFrame);
     };
 
@@ -184,8 +236,13 @@ function Scenario() {
   };
 
   const handleSimulate = () => {
-    if (isSimulating) return;
-    simulate();
+    if (isSimulating) {
+      setIsSimulating(false);
+      window.cancelAnimationFrame(animationRef.current);
+      setSimulationResult('Simulation stopped.');
+    } else {
+      simulate();
+    }
   };
 
   const handleTimeStepChange = (event, newValue) => {
@@ -193,51 +250,67 @@ function Scenario() {
   };
 
   const handleAngleChange = (event, newValue) => {
-    setAsteroid(prev => ({ ...prev, angle: newValue }));
+    setAsteroid((prev) => ({ ...prev, angle: newValue }));
     calculateForecastPath(asteroid.size, asteroid.speed, newValue, asteroid.mass);
   };
 
   return (
     <>
-      <div>
-        <h1>Asteroid Collision Scenario</h1>
-        <select onChange={handleAsteroidSelect}>
-          {asteroidsData.current.map((ast, index) => (
-            <option key={index} value={index}>{ast.name}</option>
-          ))}
-        </select>
-        <select onChange={(e) => setStrategy(e.target.value)}>
-          <option value="">Select Deflection Strategy</option>
-          <option value="Nuclear Detonation">Nuclear Detonation</option>
-          <option value="Kinetic Impact">Kinetic Impact</option>
-          <option value="Gravity Tractor">Gravity Tractor</option>
-        </select>
+      <Box sx={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+        <Typography variant="h4" gutterBottom>
+          Asteroid Collision Scenario
+        </Typography>
+        <Box sx={{ marginBottom: '20px' }}>
+          <Select
+            value={asteroid.name}
+            onChange={handleAsteroidSelect}
+            displayEmpty
+            fullWidth
+          >
+            {asteroidsData.current.map((ast, index) => (
+              <MenuItem key={index} value={index}>
+                {ast.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+        <Box sx={{ marginBottom: '20px' }}>
+          <Select
+            value={strategy}
+            onChange={(e) => setStrategy(e.target.value)}
+            displayEmpty
+            fullWidth
+          >
+            <MenuItem value="">Select Deflection Strategy</MenuItem>
+            <MenuItem value="Nuclear Detonation">Nuclear Detonation</MenuItem>
+            <MenuItem value="Kinetic Impact">Kinetic Impact</MenuItem>
+          </Select>
+        </Box>
         <Button
           variant="contained"
           color="primary"
           onClick={handleSimulate}
-          disabled={isSimulating}
-          style={{ marginTop: '10px' }}
+          style={{ marginBottom: '20px' }}
         >
-          Simulate
+          {isSimulating ? 'Stop Simulation' : 'Simulate'}
         </Button>
         {simulationResult && (
-          <div>
-            <h2>Simulation Result</h2>
-            <p>{simulationResult}</p>
-          </div>
+          <Box sx={{ marginBottom: '20px' }}>
+            <Typography variant="h6">Simulation Result</Typography>
+            <Typography>{simulationResult}</Typography>
+          </Box>
         )}
         {asteroid.name && (
-          <div>
-            <h3>Asteroid Information</h3>
-            <p><strong>Name:</strong> {asteroid.name}</p>
-            <p><strong>Size:</strong> {asteroid.size.toFixed(3)} kilometers</p>
-            <p><strong>Speed:</strong> {(asteroid.speed * 1000).toFixed(3)} km/s</p>
-            <p><strong>Mass:</strong> {asteroid.mass.toExponential(3)} kg</p>
-          </div>
+          <Box sx={{ marginBottom: '20px' }}>
+            <Typography variant="h6">Asteroid Information</Typography>
+            <Typography><strong>Name:</strong> {asteroid.name}</Typography>
+            <Typography><strong>Size:</strong> {asteroid.size.toFixed(3)} kilometers</Typography>
+            <Typography><strong>Speed:</strong> {(asteroid.speed * 1000).toFixed(3)} km/s</Typography>
+            <Typography><strong>Mass:</strong> {asteroid.mass.toExponential(3)} kg</Typography>
+          </Box>
         )}
-        <div>
-          <h3>Time Step: {timeStep}</h3>
+        <Box sx={{ marginBottom: '20px' }}>
+          <Typography>Time Step: {timeStep}</Typography>
           <Slider
             value={timeStep}
             min={10}
@@ -246,9 +319,9 @@ function Scenario() {
             onChange={handleTimeStepChange}
             aria-labelledby="time-step-slider"
           />
-        </div>
-        <div>
-          <h3>Initial Angle: {(asteroid.angle * 180 / Math.PI).toFixed(2)}°</h3>
+        </Box>
+        <Box sx={{ marginBottom: '20px' }}>
+          <Typography>Initial Angle: {(asteroid.angle * 180 / Math.PI).toFixed(2)}°</Typography>
           <Slider
             value={asteroid.angle}
             min={0}
@@ -257,8 +330,8 @@ function Scenario() {
             onChange={handleAngleChange}
             aria-labelledby="angle-slider"
           />
-        </div>
-      </div>
+        </Box>
+      </Box>
       <Stage width={CANVAS_WIDTH} height={CANVAS_HEIGHT}>
         <Layer>
           <Text text="Earth" fontSize={20} x={EARTH_X - EARTH_RADIUS_KM * EARTH_DISPLAY_SCALE} y={EARTH_Y - 10} />
@@ -269,6 +342,12 @@ function Scenario() {
           )}
           {forecastPoints.length > 0 && (
             <Line points={forecastPoints} stroke="gray" strokeWidth={2} dash={[10, 10]} />
+          )}
+          {rocket.active && (
+            <Circle x={rocket.x} y={rocket.y} radius={5} fill="red" />
+          )}
+          {rocket.trajectory.length > 0 && (
+            <Line points={rocket.trajectory} stroke="green" strokeWidth={2} />
           )}
         </Layer>
       </Stage>
