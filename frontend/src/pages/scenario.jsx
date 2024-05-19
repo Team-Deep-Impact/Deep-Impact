@@ -16,7 +16,7 @@ const CANVAS_HEIGHT = window.innerHeight;
 const EARTH_X = CANVAS_WIDTH - 100;
 const EARTH_Y = CANVAS_HEIGHT / 2;
 const SIMULATION_AREA_MULTIPLIER = 2; // Extend the simulation area
-const ROCKET_SPEED = 0.1; // Speed of the rocket
+const ROCKET_SPEED = 0.025; // Reduced speed of the rocket
 
 function Scenario() {
   const [asteroid, setAsteroid] = useState({
@@ -36,7 +36,15 @@ function Scenario() {
   const [simulationResult, setSimulationResult] = useState('');
   const [strategy, setStrategy] = useState(''); // State for selected strategy
   const [timeStep, setTimeStep] = useState(100); // State for time step
-  const [rocket, setRocket] = useState({ active: false, x: EARTH_X, y: EARTH_Y, trajectory: [], targetX: 0, targetY: 0 });
+  const [rocket, setRocket] = useState({
+    active: false,
+    x: EARTH_X,
+    y: EARTH_Y,
+    trajectory: [],
+    vx: 0, vy: 0
+  });
+  const rocketDistanceRef = useRef(10000);
+
 
   useEffect(() => {
     const fetchAsteroids = async () => {
@@ -50,6 +58,8 @@ function Scenario() {
     };
     fetchAsteroids();
   }, []);
+
+
 
   const estimateMass = (diameter) => {
     const radius = diameter / 2;
@@ -74,7 +84,8 @@ function Scenario() {
     });
     setTrajectoryPoints([]);
     calculateForecastPath(size, speed, Math.PI / 9, mass); // Calculate the forecast path once
-    setRocket({ active: false, x: EARTH_X, y: EARTH_Y, trajectory: [], targetX: 0, targetY: 0 });
+    setRocket({ active: false, x: EARTH_X, y: EARTH_Y, trajectory: [], vx: 0, vy: 0 });
+
   };
 
   const handleAsteroidSelect = (event) => {
@@ -127,30 +138,9 @@ function Scenario() {
     setForecastPoints(points);
   };
 
-  const calculateInterceptionPoint = (rocketSpeed, asteroidX, asteroidY, asteroidVX, asteroidVY) => {
-    let interceptX = asteroidX;
-    let interceptY = asteroidY;
-    let closestApproach = Infinity;
-
-    for (let t = 0; t < 5000; t += timeStep) {
-      const futureAsteroidX = asteroidX + asteroidVX * t;
-      const futureAsteroidY = asteroidY + asteroidVY * t;
-
-      const dx = futureAsteroidX - EARTH_X;
-      const dy = futureAsteroidY - EARTH_Y;
-      const distanceToAsteroid = Math.sqrt(dx * dx + dy * dy);
-
-      const timeToIntercept = distanceToAsteroid / rocketSpeed;
-      if (Math.abs(timeToIntercept - t) < closestApproach) {
-        closestApproach = Math.abs(timeToIntercept - t);
-        interceptX = futureAsteroidX;
-        interceptY = futureAsteroidY;
-      }
-    }
-
-    console.log(`Calculated interception point: (${interceptX}, ${interceptY})`);
-    return { x: interceptX, y: interceptY };
-  };
+  // useEffect(() => {
+  //
+  //   }, [rocketDistanceRef]);
 
   const simulate = () => {
     let { x, y, speed, angle, mass } = asteroid;
@@ -159,8 +149,6 @@ function Scenario() {
     let vy = speed * Math.sin(angle);
 
     const updateFrame = () => {
-      console.log(`Asteroid position: (${x}, ${y}), velocity: (${vx}, ${vy})`);
-
       const dx = EARTH_X - x;
       const dy = EARTH_Y - y;
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -182,34 +170,39 @@ function Scenario() {
       x += vx * timeStep;
       y += vy * timeStep;
 
-      // Calculate the interception point for the rocket in real-time
-      const { x: interceptX, y: interceptY } = calculateInterceptionPoint(ROCKET_SPEED, x, y, vx, vy);
-      setRocket((prev) => ({ ...prev, targetX: interceptX, targetY: interceptY }));
+      rocketDistanceRef.current = 1000;
 
-      console.log(`Rocket target updated to: (${interceptX}, ${interceptY})`);
+      setRocket((prev) => {
+        // Update rocket position
+        const rocketDx = x - prev.x;
+        const rocketDy = y - prev.y;
 
-      // Update rocket position
-      const rocketDx = rocket.targetX - rocket.x;
-      const rocketDy = rocket.targetY - rocket.y;
-      const rocketDistance = Math.sqrt(rocketDx * rocketDx + rocketDy * rocketDy);
-
-      if (rocketDistance > 1) {
+        const rocketDist = Math.sqrt(rocketDx * rocketDx + rocketDy* rocketDy);
         const rocketAngle = Math.atan2(rocketDy, rocketDx);
         const rocketVX = ROCKET_SPEED * Math.cos(rocketAngle);
-        const rocketVY = ROCKET_SPEED * Math.sin(rocketAngle);
+        const rocketVY = ROCKET_SPEED * Math.sin(rocketAngle) ;
 
-        setRocket((prev) => ({
-          ...prev,
-          x: prev.x + rocketVX * timeStep,
-          y: prev.y + rocketVY * timeStep,
-          trajectory: [...prev.trajectory, prev.x + rocketVX * timeStep, prev.y + rocketVY * timeStep],
-        }));
-      } else {
-        setSimulationResult('Rocket intercepted the asteroid!');
-        setIsSimulating(false);
-        return;
-      }
+        const newX = prev.x + rocketVX * timeStep;
+        const newY = prev.y + rocketVY * timeStep;
+        rocketDistanceRef.current=rocketDist;
 
+        const temprocket = {
+          x: newX,
+          y: newY,
+          vx: rocketVX,
+          vy: rocketVY,
+          trajectory: [...prev.trajectory, newX, newY],
+        };
+
+        return temprocket;
+      });
+
+      console.log('rocketDistance:', rocketDistanceRef);
+     if (rocketDistanceRef < asteroid.size * ASTEROID_DISPLAY_SCALE) {
+       setSimulationResult('Rocket intercepted the asteroid!');
+       setIsSimulating(false);
+       return;
+     }
       if (y > CANVAS_HEIGHT * SIMULATION_AREA_MULTIPLIER || x > CANVAS_WIDTH * SIMULATION_AREA_MULTIPLIER || y < -CANVAS_HEIGHT * SIMULATION_AREA_MULTIPLIER || x < -CANVAS_WIDTH * SIMULATION_AREA_MULTIPLIER) {
         setSimulationResult('Asteroid missed Earth!');
         setIsSimulating(false);
