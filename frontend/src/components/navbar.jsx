@@ -9,6 +9,8 @@ function NavBar() {
                 <li><Link to='/'><p className='text-2xl text-white hover:text-red-900'>Main</p></Link></li>
                 <li><Link to='scenario/'><p className='text-2xl text-white hover:text-red-900'>Scenario</p></Link></li>
                 <li><Link to='about/'><p className='text-2xl text-white hover:text-red-900'>About</p></Link></li>
+                <li><Link to='effects/'><p className='text-2xl text-white hover:text-red-900'>Effects</p></Link></li>
+                <li><Link to='defenses/'><p className='text-2xl text-white hover:text-red-900'>Defenses</p></Link></li>
             </ul>
         </div>
       </>
