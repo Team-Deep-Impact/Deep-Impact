@@ -11,6 +11,7 @@ function NavBar() {
                 <li><Link to='about/'><p className='text-2xl text-white hover:text-red-900'>About</p></Link></li>
                 <li><Link to='effects/'><p className='text-2xl text-white hover:text-red-900'>Effects</p></Link></li>
                 <li><Link to='defenses/'><p className='text-2xl text-white hover:text-red-900'>Defenses</p></Link></li>
+                {/* <li><Link to='quiz/'><p className='text-2xl text-white hover:text-red-900'>Quiz</p></Link></li> */}
             </ul>
         </div>
       </>
