@@ -2,6 +2,10 @@
 
 ![Deep Impact](https://dalle-image-storage.s3.amazonaws.com/1715997915066.jpeg)
 
+## Live App
+
+[Deep Impact](https://deep-impact.onrender.com/)
+
 ## Overview
 
 Deep Impact is a web application designed to provide users with insights into the potential dangers of asteroid impacts. Utilizing the NASA NeoWs API, we've developed a simulation tool that visualizes incoming asteroids and explores various methods of asteroid deflection.

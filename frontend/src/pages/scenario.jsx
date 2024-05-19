@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
 const EARTH_DISPLAY_SCALE = 0.01; // Display scale for Earth
-const ASTEROID_DISPLAY_SCALE = 0.3; // Display scale for asteroids
+const ASTEROID_DISPLAY_SCALE = 0.4; // Display scale for asteroids
 const G = 1e-8; // Gravitational constant for simulation
 const EARTH_MASS = 5.972e6; // Scaled down mass of Earth for simulation
 const ASTEROID_DENSITY = 2000; // Density in kg/m^3
@@ -16,7 +16,7 @@ const EARTH_X = CANVAS_WIDTH - 100;
 const EARTH_Y = CANVAS_HEIGHT / 2;
 const SIMULATION_AREA_MULTIPLIER = 2; // Extend the simulation area
 const ROCKET_SPEED = 0.025; // Reduced speed of the rocket
-
+const ROCKET_RADIUS = 10;
 function Scenario() {
   const [asteroid, setAsteroid] = useState({
     name: '',
@@ -49,7 +49,7 @@ function Scenario() {
   useEffect(() => {
     const fetchAsteroids = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/sentry/');
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_SERVER}/api/sentry/`);
         asteroidsData.current = response.data.near_earth_objects;
         setAsteroidData(0); // Set initial asteroid
       } catch (error) {
@@ -213,7 +213,7 @@ function Scenario() {
 
       setRocketDistance(rocketDistance);
 
-      if (rocketDistance <= asteroid.size * ASTEROID_DISPLAY_SCALE && !collisionOccurred) {
+      if (rocketDistance <= (asteroid.size * ASTEROID_DISPLAY_SCALE+ROCKET_RADIUS) && !collisionOccurred) {
         setSimulationResult('Rocket intercepted the asteroid!');
         setIsSimulating(false);
         return;
@@ -257,7 +257,7 @@ function Scenario() {
   return (
     <>
       <Box sx={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" gutterBottom color="white">
           Asteroid Collision Scenario
         </Typography>
         <Box sx={{ marginBottom: '20px' }}>
@@ -266,6 +266,7 @@ function Scenario() {
             onChange={handleAsteroidSelect}
             displayEmpty
             fullWidth
+            style={{ color: 'white' }}
           >
             {asteroidsData.current.map((ast, index) => (
               <MenuItem key={index} value={index}>
@@ -280,6 +281,7 @@ function Scenario() {
             onChange={(e) => setStrategy(e.target.value)}
             displayEmpty
             fullWidth
+            style={{ color: 'white' }}
           >
             <MenuItem value="">Select Deflection Strategy</MenuItem>
             <MenuItem value="Nuclear Detonation">Nuclear Detonation</MenuItem>
@@ -296,21 +298,21 @@ function Scenario() {
         </Button>
         {simulationResult && (
           <Box sx={{ marginBottom: '20px' }}>
-            <Typography variant="h6">Simulation Result</Typography>
-            <Typography>{simulationResult}</Typography>
+            <Typography variant="h6" color="white">Simulation Result</Typography>
+            <Typography color="white">{simulationResult}</Typography>
           </Box>
         )}
         {asteroid.name && (
           <Box sx={{ marginBottom: '20px' }}>
-            <Typography variant="h6">Asteroid Information</Typography>
-            <Typography><strong>Name:</strong> {asteroid.name}</Typography>
-            <Typography><strong>Size:</strong> {asteroid.size.toFixed(3)} kilometers</Typography>
-            <Typography><strong>Speed:</strong> {(asteroid.speed * 1000).toFixed(3)} km/s</Typography>
-            <Typography><strong>Mass:</strong> {asteroid.mass.toExponential(3)} kg</Typography>
+            <Typography variant="h6" color="white">Asteroid Information</Typography>
+            <Typography color="white"><strong>Name:</strong> {asteroid.name}</Typography>
+            <Typography color="white"><strong>Size:</strong> {asteroid.size.toFixed(3)} kilometers</Typography>
+            <Typography color="white"><strong>Speed:</strong> {(asteroid.speed * 1000).toFixed(3)} km/s</Typography>
+            <Typography color="white"><strong>Mass:</strong> {asteroid.mass.toExponential(3)} kg</Typography>
           </Box>
         )}
         <Box sx={{ marginBottom: '20px' }}>
-          <Typography>Time Step: {timeStep}</Typography>
+          <Typography color="white">Time Step: {timeStep}</Typography>
           <Slider
             value={timeStep}
             min={10}
@@ -321,7 +323,7 @@ function Scenario() {
           />
         </Box>
         <Box sx={{ marginBottom: '20px' }}>
-          <Typography>Initial Angle: {(asteroid.angle * 180 / Math.PI).toFixed(2)}°</Typography>
+          <Typography color="white">Initial Angle: {(asteroid.angle * 180 / Math.PI).toFixed(2)}°</Typography>
           <Slider
             value={asteroid.angle}
             min={0}
@@ -334,20 +336,22 @@ function Scenario() {
       </Box>
       <Stage width={CANVAS_WIDTH} height={CANVAS_HEIGHT}>
         <Layer>
-          <Text text="Earth" fontSize={20} x={EARTH_X - EARTH_RADIUS_KM * EARTH_DISPLAY_SCALE} y={EARTH_Y - 10} />
-          <Circle x={EARTH_X} y={EARTH_Y} radius={EARTH_RADIUS_KM * EARTH_DISPLAY_SCALE} fill="blue" />
-          <Circle x={asteroid.x} y={asteroid.y} radius={asteroid.size * ASTEROID_DISPLAY_SCALE} fill="gray" stroke="black" strokeWidth={1} />
-          {trajectoryPoints.length > 0 && (
-            <Line points={trajectoryPoints.flat()} stroke="red" strokeWidth={2} />
-          )}
+          <Text text="Earth" fontSize={20} x={EARTH_X - EARTH_RADIUS_KM * EARTH_DISPLAY_SCALE} y={EARTH_Y - 10} fill="white" />
+          <Circle x={EARTH_X} y={EARTH_Y} radius={EARTH_RADIUS_KM * EARTH_DISPLAY_SCALE} fill="blue" stroke="black" strokeWidth={1}/>
+          <Circle x={asteroid.x} y={asteroid.y} radius={asteroid.size * ASTEROID_DISPLAY_SCALE} fill="white" stroke="black" strokeWidth={1} />
           {forecastPoints.length > 0 && (
-            <Line points={forecastPoints} stroke="gray" strokeWidth={2} dash={[10, 10]} />
+            <Line points={forecastPoints} stroke="white" strokeWidth={2} dash={[10, 10]} />
+          )} 
+
+          {trajectoryPoints.length > 0 && (
+            <Line points={trajectoryPoints.flat()} stroke="red" strokeWidth={3} />
           )}
-          {rocket.active && (
-            <Circle x={rocket.x} y={rocket.y} radius={5} fill="red" />
+
+          {(
+            <Circle x={rocket.x} y={rocket.y} radius={ROCKET_RADIUS} fill="green" stroke="black" strokeWidth={1}/>
           )}
           {rocket.trajectory.length > 0 && (
-            <Line points={rocket.trajectory} stroke="green" strokeWidth={2} />
+            <Line points={rocket.trajectory} stroke="green" strokeWidth={3} />
           )}
         </Layer>
       </Stage>
