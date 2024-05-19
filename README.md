@@ -31,22 +31,35 @@ To learn more about Deep Impact, check out our [Deep Impact GitHub](https://gith
 1. **Set Up Python Environment**:
     - Vanilla Python:
         ```sh
-        python -m venv deep-impact-env
+        python -m venv .venv
         ```
     - Virtual Environment Wrapper:
         ```sh
-        mkvirtualenv deep-impact-env
+        mkvirtualenv .venv
         ```
     - Activate the environment:
         ```sh
-        source deep-impact-env/bin/activate
+        source .venv/bin/activate
         ```
 
 2. **Install Required Packages**:
     - Navigate to the backend directory and install dependencies:
         ```sh
-        cd Deep-Impact/backend/deep_impact_proj
+        cd Deep-Impact/backend
         pip install -r requirements.txt
+        ```
+
+3. **Initial Migration(s)**:
+    - Ensure you're located in the path: Deep-Impact/backend
+        ```sh
+        python manage.py makemigrations
+        python manage.py migrate
+        ```
+
+4. **Start Django Server**:
+    - Ensure you're located in the path: Deep-Impact/backend
+        ```sh
+        python manage.py runserver
         ```
 
 ### Vite Frontend Setup
