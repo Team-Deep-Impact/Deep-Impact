@@ -16,6 +16,7 @@ const CANVAS_HEIGHT = window.innerHeight;
 const EARTH_X = CANVAS_WIDTH - 100;
 const EARTH_Y = CANVAS_HEIGHT / 2;
 const SIMULATION_AREA_MULTIPLIER = 2; // Extend the simulation area
+const ROCKET_SPEED = 0.1; // Speed of the rocket
 
 function Scenario() {
   const [asteroid, setAsteroid] = useState({
@@ -35,6 +36,7 @@ function Scenario() {
   const [simulationResult, setSimulationResult] = useState('');
   const [strategy, setStrategy] = useState(''); // State for selected strategy
   const [timeStep, setTimeStep] = useState(100); // State for time step
+  const [rocket, setRocket] = useState({ active: false, x: EARTH_X, y: EARTH_Y, trajectory: [], targetX: 0, targetY: 0 });
 
   useEffect(() => {
     const fetchAsteroids = async () => {
@@ -72,21 +74,11 @@ function Scenario() {
     });
     setTrajectoryPoints([]);
     calculateForecastPath(size, speed, Math.PI / 9, mass); // Calculate the forecast path once
+    setRocket({ active: false, x: EARTH_X, y: EARTH_Y, trajectory: [], targetX: 0, targetY: 0 });
   };
 
   const handleAsteroidSelect = (event) => {
     setAsteroidData(event.target.value);
-  };
-
-  const applyDeflectionStrategy = (vx, vy) => {
-    if (strategy === 'Nuclear Detonation') {
-      vx += 0.5; // Example effect
-    } else if (strategy === 'Kinetic Impact') {
-      vx += 0.25; // Example effect
-    } else if (strategy === 'Gravity Tractor') {
-      vy -= 0.1; // Example effect
-    }
-    return { vx, vy };
   };
 
   const calculateForecastPath = (size, speed, angle, mass) => {
@@ -135,6 +127,31 @@ function Scenario() {
     setForecastPoints(points);
   };
 
+  const calculateInterceptionPoint = (rocketSpeed, asteroidX, asteroidY, asteroidVX, asteroidVY) => {
+    let interceptX = asteroidX;
+    let interceptY = asteroidY;
+    let closestApproach = Infinity;
+
+    for (let t = 0; t < 5000; t += timeStep) {
+      const futureAsteroidX = asteroidX + asteroidVX * t;
+      const futureAsteroidY = asteroidY + asteroidVY * t;
+
+      const dx = futureAsteroidX - EARTH_X;
+      const dy = futureAsteroidY - EARTH_Y;
+      const distanceToAsteroid = Math.sqrt(dx * dx + dy * dy);
+
+      const timeToIntercept = distanceToAsteroid / rocketSpeed;
+      if (Math.abs(timeToIntercept - t) < closestApproach) {
+        closestApproach = Math.abs(timeToIntercept - t);
+        interceptX = futureAsteroidX;
+        interceptY = futureAsteroidY;
+      }
+    }
+
+    console.log(`Calculated interception point: (${interceptX}, ${interceptY})`);
+    return { x: interceptX, y: interceptY };
+  };
+
   const simulate = () => {
     let { x, y, speed, angle, mass } = asteroid;
 
@@ -162,10 +179,36 @@ function Scenario() {
       vx += ax * timeStep;
       vy += ay * timeStep;
 
-      ({ vx, vy } = applyDeflectionStrategy(vx, vy));
-
       x += vx * timeStep;
       y += vy * timeStep;
+
+      // Calculate the interception point for the rocket in real-time
+      const { x: interceptX, y: interceptY } = calculateInterceptionPoint(ROCKET_SPEED, x, y, vx, vy);
+      setRocket((prev) => ({ ...prev, targetX: interceptX, targetY: interceptY }));
+
+      console.log(`Rocket target updated to: (${interceptX}, ${interceptY})`);
+
+      // Update rocket position
+      const rocketDx = rocket.targetX - rocket.x;
+      const rocketDy = rocket.targetY - rocket.y;
+      const rocketDistance = Math.sqrt(rocketDx * rocketDx + rocketDy * rocketDy);
+
+      if (rocketDistance > 1) {
+        const rocketAngle = Math.atan2(rocketDy, rocketDx);
+        const rocketVX = ROCKET_SPEED * Math.cos(rocketAngle);
+        const rocketVY = ROCKET_SPEED * Math.sin(rocketAngle);
+
+        setRocket((prev) => ({
+          ...prev,
+          x: prev.x + rocketVX * timeStep,
+          y: prev.y + rocketVY * timeStep,
+          trajectory: [...prev.trajectory, prev.x + rocketVX * timeStep, prev.y + rocketVY * timeStep],
+        }));
+      } else {
+        setSimulationResult('Rocket intercepted the asteroid!');
+        setIsSimulating(false);
+        return;
+      }
 
       if (y > CANVAS_HEIGHT * SIMULATION_AREA_MULTIPLIER || x > CANVAS_WIDTH * SIMULATION_AREA_MULTIPLIER || y < -CANVAS_HEIGHT * SIMULATION_AREA_MULTIPLIER || x < -CANVAS_WIDTH * SIMULATION_AREA_MULTIPLIER) {
         setSimulationResult('Asteroid missed Earth!');
@@ -184,8 +227,13 @@ function Scenario() {
   };
 
   const handleSimulate = () => {
-    if (isSimulating) return;
-    simulate();
+    if (isSimulating) {
+      setIsSimulating(false);
+      window.cancelAnimationFrame(animationRef.current);
+      setSimulationResult('Simulation stopped.');
+    } else {
+      simulate();
+    }
   };
 
   const handleTimeStepChange = (event, newValue) => {
@@ -216,10 +264,9 @@ function Scenario() {
           variant="contained"
           color="primary"
           onClick={handleSimulate}
-          disabled={isSimulating}
           style={{ marginTop: '10px' }}
         >
-          Simulate
+          {isSimulating ? 'Stop Simulation' : 'Simulate'}
         </Button>
         {simulationResult && (
           <div>
@@ -269,6 +316,12 @@ function Scenario() {
           )}
           {forecastPoints.length > 0 && (
             <Line points={forecastPoints} stroke="gray" strokeWidth={2} dash={[10, 10]} />
+          )}
+          {rocket.active && (
+            <Circle x={rocket.x} y={rocket.y} radius={5} fill="red" />
+          )}
+          {rocket.trajectory.length > 0 && (
+            <Line points={rocket.trajectory} stroke="red" strokeWidth={2} />
           )}
         </Layer>
       </Stage>
