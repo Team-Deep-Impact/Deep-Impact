@@ -10,7 +10,7 @@ from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST
 )
-from .utils import get_sentry
+from .utils import get_sentry, get_quiz
 
 sentry_api_key = os.environ.get("SENTRY_API_KEY")
 
@@ -23,4 +23,6 @@ class Sentry(APIView):
 
 
 class OpenAI(APIView):
+    def get(self, request):
+        return get_quiz()
     pass

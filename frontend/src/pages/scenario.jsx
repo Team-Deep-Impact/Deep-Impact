@@ -49,7 +49,7 @@ function Scenario() {
   useEffect(() => {
     const fetchAsteroids = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/sentry/');
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_SERVER}/api/sentry/`);
         asteroidsData.current = response.data.near_earth_objects;
         setAsteroidData(0); // Set initial asteroid
       } catch (error) {

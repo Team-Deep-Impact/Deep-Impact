@@ -6,6 +6,7 @@ import Scenario from "./pages/scenario";
 import About from "./pages/about";
 import Effects from "./pages/effects";
 import Defenses from "./pages/defenses";
+import Quiz from "./pages/quiz";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
       {
         path: 'defenses/',
         element: <Defenses />
+      },
+      {
+        path: 'quiz/',
+        element: <Quiz />
       }
     ],
   },
