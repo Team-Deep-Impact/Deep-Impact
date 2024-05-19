@@ -12,12 +12,13 @@ Deep Impact is a web application designed to provide users with insights into th
 
 ### Our Team
 
-- Daniel Smith-dePaz
-- Jordan Yamada
-- Pierre Bell
-- Michael Roy
-- Mickey Shoenberger
-- Jordan Edgington
+- [Pierre Bell](https://github.com/Landy-87)
+- [Jordan Edgington](https://github.com/Jordan-Edgington)
+- [Michael Roy](https://github.com/its-michaelroy)
+- [Mickey Shoenberger](https://github.com/michelle-shoenberger)
+- [Daniel Smith-dePaz](https://github.com/adeadzeplin)
+- [Jordan Yamada](https://github.com/JordanYamada)
+
 
 To learn more about Deep Impact, check out our [Deep Impact GitHub](https://github.com/Team-Deep-Impact/Deep-Impact).
 
@@ -27,6 +28,10 @@ To learn more about Deep Impact, check out our [Deep Impact GitHub](https://gith
 2. **Scenario & Deflection Strategies**: Explore various methods of asteroid deflection, such as Nuclear Detonation, Kinetic Impact, and Gravity Tractor.
 3. **Simulation Tool**: Simulate asteroid trajectories and deflection outcomes.
 4. **Dashboard**: View the dashboard, and other pages with relevant information and insights.
+
+## Technical Documentations
+
+[Frontend Documentaions](./frontend/README.md)
 
 ## Getting Started
 
@@ -60,7 +65,14 @@ To learn more about Deep Impact, check out our [Deep Impact GitHub](https://gith
         python manage.py migrate
         ```
 
-4. **Start Django Server**:
+4. **Making Environmental Variables**:
+    - Ensure you're located in the path: Deep-Impact/backend
+        ```sh
+        touch .env
+        ```
+    - Follow the .env.sample as a template to fill in your environmental variables
+
+5. **Start Django Server**:
     - Ensure you're located in the path: Deep-Impact/backend
         ```sh
         python manage.py runserver
@@ -74,7 +86,14 @@ To learn more about Deep Impact, check out our [Deep Impact GitHub](https://gith
         npm install
         ```
 
-2. **Run Development Server**:
+2. **Making Environmental Variables**:
+    - Ensure you're located in the path: Deep-Impact/frontend
+        ```sh
+        touch .env
+        ```
+    - Follow the .env.sample as a template to fill in your environmental variables
+
+3. **Run Development Server**:
     - Start the development server:
         ```sh
         npm run dev

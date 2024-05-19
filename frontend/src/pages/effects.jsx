@@ -72,16 +72,6 @@ const Effects = () => {
         </li>
       </ul>
 
-      <h3 className="text-2xl font-bold text-white my-5">Mitigation and Prevention</h3>
-      <ul className="list-disc pl-5 text-l text-white">
-        <li className="mb-3">
-          <strong>Early Detection:</strong> Advances in space observation aim to detect potential impactors well in advance. Programs like NASA’s Near-Earth Object (NEO) Observations Program work towards this goal.
-        </li>
-        <li className="mb-3">
-          <strong>Deflection Strategies:</strong> Potential strategies for deflecting an asteroid include kinetic impactors, gravitational tractors, or even nuclear devices to alter the asteroid’s trajectory.
-        </li>
-      </ul>
-
       <div className="mt-3">
         <p className="text-l text-white mb-10">
           In summary, while the impact of small meteors is relatively minor and localized, large meteors can have devastating global consequences. Preparedness and mitigation strategies are essential for minimizing the potential impacts of such events.
@@ -91,4 +81,4 @@ const Effects = () => {
   );
 }
 
-export default Effects;
+export default Effects
