@@ -3,7 +3,7 @@ import { Stage, Layer, Circle, Text, Line } from 'react-konva';
 import { Slider, Button } from '@mui/material';
 import axios from 'axios';
 
-const API_KEY = 'LF7i77oqghRiq54HEFJh991WgjHcKsETP9D5ofsg';
+
 const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
 const EARTH_DISPLAY_SCALE = 0.01; // Display scale for Earth
 const ASTEROID_DISPLAY_SCALE = 0.3; // Display scale for asteroids
@@ -37,9 +37,9 @@ function Scenario() {
   const [timeStep, setTimeStep] = useState(100); // State for time step
 
   useEffect(() => {
-    const fetchAsteroids = async () => {
+    const fetchAsteroids = async (self, request) => {
       try {
-        const response = await axios.get(`https://api.nasa.gov/neo/rest/v1/neo/browse?api_key=${API_KEY}`);
+        const response = await axios.get(`http://localhost:8000/api/sentry/`);
         asteroidsData.current = response.data.near_earth_objects;
         setAsteroidData(0); // Set initial asteroid
       } catch (error) {

@@ -1,8 +1,7 @@
 from django.urls import path
-from .views import (
-    Sentry,
-    OpenAI,
-)
+from .views import Sentry, OpenAI
+
+
 
 urlpatterns = [
     path('sentry/', Sentry.as_view(), name='sentry'),
