@@ -1,5 +1,5 @@
 function About() {
-  
+
     return (
       <>
         <div className='text-white text-center flex flex-col w-1/2'>
@@ -19,11 +19,10 @@ function About() {
             </ul>
             </div>
             <p className='italic m-4'>The Sky Is Falling!</p>
-            <p className='m-4'>To see learn more about Deep Impact, checkout our <a href='https://github.com/Team-Deep-Impact/Deep-Impact/blob/threats-page/frontend/src/pages/about.jsx' className='underline hover:text-red-900'>GitHub</a>.</p>
+            <p className='m-4'>To see learn more about Deep Impact, checkout our <a href='https://github.com/Team-Deep-Impact/Deep-Impact' className='underline hover:text-red-900'>GitHub</a>.</p>
         </div>
       </>
     )
   }
-  
+
   export default About
-  
