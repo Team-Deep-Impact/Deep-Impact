@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Configuration for npm dependencies
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    labels:
+      - 'dependencies'
+      - 'npm'
+
+  # Configuration for pip dependencies
+  - package-ecosystem: 'pip'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    open-pull-requests-limit: 10
+    labels:
+      - 'dependencies'
+      - 'pip'
