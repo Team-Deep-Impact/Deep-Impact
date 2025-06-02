@@ -28,9 +28,9 @@ def get_sentry():
         response.raise_for_status()
         data = response.json()
         return Response(data, status=HTTP_200_OK)
-    except ValidationError as e:
-        print(e)
-        return Response(e, status=HTTP_400_BAD_REQUEST)
+    except (requests.RequestException, json.JSONDecodeError) as e:
+        logger.error(f"Error in get_sentry: {str(e)}", exc_info=True)
+        return Response({"error": "Failed to fetch Sentry data"}, status=HTTP_400_BAD_REQUEST)
     
 
 
@@ -110,9 +110,9 @@ def get_quiz():
     print(data)
 
     return Response(data, status=HTTP_201_CREATED)
-  except ValidationError as e:
-    print(e)
-    return Response(e, status=HTTP_400_BAD_REQUEST)
+  except (json.JSONDecodeError, openai.OpenAIError) as e:
+        logger.error(f"Error in get_quiz: {str(e)}", exc_info=True)
+        return Response({"error": "Failed to generate quiz"}, status=HTTP_400_BAD_REQUEST)
 
 # ask_question()
 
