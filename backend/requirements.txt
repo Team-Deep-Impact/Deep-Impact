@@ -51,7 +51,7 @@ sortedcontainers==2.4.0
 sqlparse==0.5.3
 toml==0.10.2
 tqdm==4.67.1
-typing_extensions==4.12.2
+typing_extensions==4.15.0
 urllib3==2.4.0
 uvicorn==0.31.0
 whitenoise==6.9.0
