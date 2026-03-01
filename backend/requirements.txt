@@ -8,7 +8,7 @@ CacheControl==0.14.3
 certifi==2025.4.26
 charset-normalizer==3.4.2
 click==8.1.8
-cyclonedx-python-lib==10.0.1
+cyclonedx-python-lib==11.1.0
 defusedxml==0.7.1
 distro==1.9.0
 Django==5.2.1
@@ -28,7 +28,7 @@ license-expression==30.4.1
 markdown-it-py==3.0.0
 mdurl==0.1.2
 msgpack==1.1.0
-openai==1.82.1
+openai==2.0.0
 packageurl-python==0.16.0
 packaging==25.0
 pip-api==0.0.34
@@ -38,11 +38,11 @@ psutil==7.0.0
 py-serializable==2.0.0
 pydantic==2.11.5
 pydantic_core==2.34.1
-Pygments==2.19.1
+Pygments==2.19.2
 pyparsing==3.2.3
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
-requests==2.32.3
+requests==2.32.5
 rich==14.0.0
 s3transfer==0.13.0
 six==1.17.0
@@ -51,7 +51,7 @@ sortedcontainers==2.4.0
 sqlparse==0.5.3
 toml==0.10.2
 tqdm==4.67.1
-typing_extensions==4.12.2
+typing_extensions==4.15.0
 urllib3==2.4.0
-uvicorn==0.31.0
+uvicorn==0.37.0
 whitenoise==6.9.0
